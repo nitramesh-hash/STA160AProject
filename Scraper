@@ -1,0 +1,54 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def scrape_course_catalog(subject_code, save_dir="datasets"):
+    """
+    Scrape UC Davis course catalog for a given subject code (e.g. 'sta', 'ecn', 'mat'),
+    including prerequisite text with embedded links.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    url = f"https://catalog.ucdavis.edu/courses-subject-code/{subject_code}/"
+    print(f"Scraping {url}")
+
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"Failed to load page: HTTP {response.status_code}")
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    courses = soup.find_all("div", class_="courseblock")
+
+    data = []
+    for course in courses:
+        code = course.find("span", class_="detail-code")
+        title = course.find("span", class_="detail-title")
+        units = course.find("span", class_="detail-hours_html")
+        desc = course.find("div", class_="courseblockextra")
+
+        # Flexible prerequisite finder — match any tag whose class contains 'detail-prerequisite'
+        prereq_tag = course.find(lambda tag: tag.has_attr("class") and any("detail-prerequisite" in c for c in tag["class"]))
+
+        if prereq_tag:
+            # Extract all text (including from links)
+            prereq_text = " ".join(prereq_tag.stripped_strings)
+            # Clean prefix and spacing
+            prereq_text = prereq_text.replace("Prerequisite(s):", "").strip()
+        else:
+            prereq_text = ""
+
+        data.append({
+            "Course Code": code.get_text(strip=True) if code else "",
+            "Title": title.get_text(strip=True) if title else "",
+            "Units": units.get_text(strip=True) if units else "",
+            "Description": desc.get_text(strip=True) if desc else "",
+            "Prerequisites": prereq_text
+        })
+
+    df = pd.DataFrame(data)
+    output_path = os.path.abspath(os.path.join(save_dir, f"{subject_code.upper()}_courses.csv"))
+    df.to_csv(output_path, index=False)
+    print(f"Scraped {len(df)} {subject_code.upper()} courses and saved to:\n   {output_path}")
+    return output_path
