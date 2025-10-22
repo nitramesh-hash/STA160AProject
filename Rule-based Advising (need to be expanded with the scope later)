@@ -1,0 +1,30 @@
+import pandas as pd
+import re
+
+sta_df = pd.read_csv("datasets/STA_courses.csv")
+
+def extract_courses_codes(text):
+
+    if pd.isna(text):
+        return[]
+    return re.findall(r"[A-Z]{3}\s?\d{3}[A-Z]", text)
+
+def can_take_course(course_code, completed_courses, df):
+    row = df[df["Course Code"] == course_code]
+    if row.empty:
+        return f"{course_code} not found in catalog."
+    
+    prereq_text = row.iloc[0]["Prerequisites"]
+    if not prereq_text:
+        return f"You can take {course_code} - no prerequisites."
+    
+    prereq_codes = extract_courses_codes(prereq_text)
+    if not prereq_codes:
+        return f"You can take {course_code} - no specific course prerequisites"
+    
+    unmet = [c for c in prereq_codes if c not in completed_courses]
+    if unmet:
+        return f" You need to complete {','.join(unmet)} before taking {course_code}."
+    else:
+        return f"You meet the prerequisites for {course_code}."
+    
