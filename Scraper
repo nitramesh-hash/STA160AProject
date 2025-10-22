@@ -6,7 +6,6 @@ import pandas as pd
 def scrape_course_catalog(subject_code, save_dir="datasets"):
     """
     Scrape UC Davis course catalog for a given subject code (e.g. 'sta', 'ecn', 'mat'),
-    including prerequisite text with embedded links.
     """
     os.makedirs(save_dir, exist_ok=True)
     url = f"https://catalog.ucdavis.edu/courses-subject-code/{subject_code}/"
