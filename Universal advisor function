@@ -1,0 +1,8 @@
+def advisor_can_take(course_code, completed_courses):
+
+    prefix = get_subject_prefix(course_code)
+    if not prefix:
+        return "Could not determine department for course code."
+    
+    df = load_or_scrape_catalog(prefix)
+    return can_take_course(course_code.upper(), [c.upper() for c in completed_courses], df)
