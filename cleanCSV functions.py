@@ -1,0 +1,35 @@
+def cleanCSV(csv): #csv is the dataframe
+    csv['Title'] = cleanTitle(csv['Title'])
+    csv['Units'] = cleanUnits(csv['Units'])
+    csv['Learning Activities'] = learnActivities(csv['Description'])
+    csv['Grade Mode'] = gradeMode(csv['Description'])
+    csv['General Education'] = genEd(csv['Description'])
+    return csv
+
+def cleanTitle(titles):
+    rx = r"^—\u00A0([A-Za-z &:+,'-]+).*"
+    titles = titles.apply(lambda x: re.sub(rx, r"\1", x).strip())
+    return titles
+
+def cleanUnits(units):
+    rx0 = r"^\(([0-9]).*"
+    units = units.apply(lambda x: int(re.sub(rx0, r"\1", x)))
+    return units
+
+def learnActivities(descriptions):
+    rx2 = r"(?<=Learning Activities:)([^.]+)"
+    act = descriptions.str.extract(rx2)
+    return act
+
+def gradeMode(descriptions):
+    rx3 = r"(?<=Grade Mode:)([^.]+)"
+    mode = descriptions.str.extract(rx3)
+    mode[mode == 'P/NP only'] = 'Pass/No Pass only'
+    return mode
+
+def genEd(descriptions):
+    rx4 = r"(?<=General Education:)([^.]+)"
+    genEd = descriptions.str.extract(rx4)
+    rx5 = r"(?<=\()[A-Z]+(?=\))"
+    l = genEd[0].str.findall(rx5).str.join(', ')
+    return l
