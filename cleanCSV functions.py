@@ -1,3 +1,7 @@
+import pandas as pd
+import numpy as np
+import re
+
 def cleanCSV(csv): #csv is the dataframe
     csv['Title'] = cleanTitle(csv['Title'])
     csv['Units'] = cleanUnits(csv['Units'])
