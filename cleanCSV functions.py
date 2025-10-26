@@ -12,12 +12,12 @@ def cleanCSV(csv): #csv is the dataframe
 
 def cleanTitle(titles):
     rx = r"^—\u00A0([A-Za-z &:+,'-]+).*"
-    titles = titles.apply(lambda x: re.sub(rx, r"\1", x).strip())
+    titles = titles.str.extract(rx, expand=False).str.strip()
     return titles
 
 def cleanUnits(units):
     rx0 = r"^\(([0-9]).*"
-    units = units.apply(lambda x: int(re.sub(rx0, r"\1", x)))
+    units = units.str.extract(rx0, expand=False).astype(int)
     return units
 
 def learnActivities(descriptions):
