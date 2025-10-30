@@ -1,0 +1,41 @@
+def suggest_eligible_courses(subject_code, completed_courses):
+    df = load_or_scrape_catalog(subject_code)
+    completed = [c.upper() for c in completed_courses]
+
+    eligible = []
+    blocked = [] 
+
+    for _, row in df.iterrows():
+        course_code = str(row["Course Code"]).upper()
+        title = str(row.get("Title", "")).strip()
+        prereq_text = str(row.get("Prerequisites", ""))
+
+        if course_code in completed:
+            continue
+
+        prereqs = extract_courses_codes(prereq_text)
+
+        if not prereqs:
+            eligible.append({"Course Code": course_code, "Title": title})
+        else:
+            unmet = [p for p in prereqs if p not in completed]
+            if not unmet:
+                eligible.append({"Course Code": course_code, "Title": title})
+            else:
+                blocked.append({"Course": course_code, "Missing": unmet})
+
+    eligible_df = pd.DataFrame(eligible)
+    blocked_df = pd.DataFrame(blocked)
+
+    print(f"\n✅ You are eligible to take {len(eligible)} {subject_code.upper()} courses.\n")
+
+    if not eligible_df.empty:
+        print("Here are the courses you can take next:\n")
+        for _, row in eligible_df.iterrows():
+            print(f"  • {row['Course Code']}: {row['Title']}")
+    else:
+        print("No eligible courses found — you may need more prerequisites first.")
+
+    print(f"\n🚫 {len(blocked)} courses still have unmet prerequisites.\n")
+
+    return eligible_df, blocked_df
