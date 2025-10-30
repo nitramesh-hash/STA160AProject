@@ -1,0 +1,17 @@
+import streamlit as st
+def render_results(eligible_df, blocked_df, subject_code):
+    st.success(f"You are eligible to take {len(eligible_df)} {subject_code} courses.")
+
+    st.subheader("Eligible Courses")
+    if not eligible_df.empty:
+        st.dataframe(eligible_df, use_container_width=True)
+    else:
+        st.info("No eligible course found yet.")
+
+
+    st.subheader("Blocked Courses (Unmet Prerequisites)")
+    if not blocked_df.empty:
+        st.dataframe(blocked_df, use_container_width=True)
+
+    else:
+        st.sucess("You have no blocked courses in this catalog!")
