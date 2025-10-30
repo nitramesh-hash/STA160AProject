@@ -1,0 +1,37 @@
+import streamlit as st
+import pandas as pd
+from pathlib import Path
+import sys
+
+from components.header import render_header
+from components.sidebar import render_sidebar
+from components.course_tables import render_results
+
+backend_path = Path(__file__).resolve().parents[1] / "backend"
+sys.path.append(str(backend_path))
+from advisor_backend import suggest_eligible_courses
+
+st.set_page_config(page_title="UC Davis AI Advisor", page_icon="🎓", layout="wide")
+
+render_header()
+render_sidebar()
+
+col1, col2 = st.columns([1, 2])
+with col1:
+    subject_code = st.text_input("Subject Code (e.g., STA):", value="STA").upper()
+with col2:
+    completed_courses = st.text_area("Completed Courses:", value="STA 013, MAT 016B")
+
+level = st.radio(
+    "Select your academic level:",
+    ["Undergraduate", "Graduate"],
+    horizontal=True
+)
+
+level_key = "undergrad" if level == "Undergraduate" else "grad"
+
+if st.button("Check My Eligibility"):
+    completed_list = [c.strip().upper() for c in completed_courses.split(",")]
+    with st.spinner("Analyzing your eligibility..."):
+        eligible_df, blocked_df = suggest_eligible_courses(subject_code, completed_list, level_key)
+        render_results(eligible_df, blocked_df, subject_code)
