@@ -1,3 +1,10 @@
+import pandas as pd
+import re
+import os
+import requests
+from bs4 import BeautifulSoup
+import numpy as np
+
 def suggest_eligible_courses(subject_code, completed_courses):
     df = load_or_scrape_catalog(subject_code)
     completed = [c.upper() for c in completed_courses]
