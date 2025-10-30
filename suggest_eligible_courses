@@ -34,7 +34,7 @@ def suggest_eligible_courses(subject_code, completed_courses):
     eligible_df = pd.DataFrame(eligible)
     blocked_df = pd.DataFrame(blocked)
 
-    print(f"\n✅ You are eligible to take {len(eligible)} {subject_code.upper()} courses.\n")
+    print(f"You are eligible to take {len(eligible)} {subject_code.upper()} courses.\n")
 
     if not eligible_df.empty:
         print("Here are the courses you can take next:\n")
@@ -43,6 +43,6 @@ def suggest_eligible_courses(subject_code, completed_courses):
     else:
         print("No eligible courses found — you may need more prerequisites first.")
 
-    print(f"\n🚫 {len(blocked)} courses still have unmet prerequisites.\n")
+    print(f"{len(blocked)} courses still have unmet prerequisites.\n")
 
     return eligible_df, blocked_df
