@@ -1,0 +1,74 @@
+import pandas as pd
+import re
+import os
+import requests
+from bs4 import BeautifulSoup
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+from networkx.drawing.nx_agraph import graphviz_layout
+
+def plot_course_dependency_graph(subject_code, completed_courses, save_path="course_graph.png"):
+    completed_courses = [c.replace(" ", "").upper() for c in completed_courses]
+    df = load_or_scrape_catalog(subject_code)
+    G = nx.DiGraph()
+
+    for _, row in df.iterrows():
+        course = str(row["Course Code"]).replace(" ", "").upper()
+        prereq_text = str(row.get("Prerequisites", ""))
+        prereqs = [p.replace(" ", "").upper() for p in extract_courses_codes(prereq_text)]
+        for p in prereqs:
+            G.add_edge(p, course)
+
+    eligible, blocked = [], []
+    for course in G.nodes:
+        prereqs = list(G.predecessors(course))
+        unmet = [p for p in prereqs if p not in completed_courses]
+        if course in completed_courses:
+            continue
+        if not prereqs or not unmet:
+            eligible.append(course)
+        else:
+            blocked.append(course)
+    
+    related = set()
+    for c in completed_courses:
+        if c in G:
+            related.add(c)
+            related.update(nx.descendants(G, c))   # courses unlocked by completed ones
+            related.update(nx.ancestors(G, c))     # prerequisites of completed ones (optional)
+        else:
+            print(f"Warning: {c} not found in graph nodes, skipping.")
+        
+    G = G.subgraph(related).copy()
+
+    node_colors = []
+    for n in G.nodes:
+        if n in completed_courses:
+            node_colors.append("lightgreen")  # completed
+        elif n in eligible:
+            node_colors.append("khaki")       # eligible next
+        else:
+            node_colors.append("lightcoral")  # blocked
+
+    try:
+        pos = graphviz_layout(G, prog="dot", args="-Grankdir=TB")
+    except Exception as e:
+        print("Graphviz layout failed, using spring layout instead:", e)
+        pos = nx.spring_layout(G, k=0.5, iterations=50)
+
+    plt.figure(figsize=(14, 10))
+    nx.draw(
+        G, pos,
+        with_labels=True,
+        node_color=node_colors,
+        node_size=900,
+        font_size=8,
+        arrowsize=10,
+        edge_color="lightgray",
+    )
+    plt.title(f"{subject_code.upper()} Course Prerequisite Graph (with Eligibility)", fontsize=12)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    print(f"Graph saved to {os.path.abspath(save_path)}")
+    plt.show()
