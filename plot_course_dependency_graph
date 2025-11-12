@@ -9,14 +9,15 @@ import matplotlib.pyplot as plt
 from networkx.drawing.nx_agraph import graphviz_layout
 
 def plot_course_dependency_graph(subject_code, completed_courses, save_path="course_graph.png"):
-    completed_courses = [c.replace(" ", "").upper() for c in completed_courses]
+    completed_courses = [re.sub(r"\s+", "", c.upper()) for c in completed_courses]
+    
     df = load_or_scrape_catalog(subject_code)
     G = nx.DiGraph()
 
     for _, row in df.iterrows():
-        course = str(row["Course Code"]).replace(" ", "").upper()
+        course = re.sub(r"\s+", "", str(row["Course Code"]).upper())
         prereq_text = str(row.get("Prerequisites", ""))
-        prereqs = [p.replace(" ", "").upper() for p in extract_courses_codes(prereq_text)]
+        prereqs = [re.sub(r"\s+", "", p.upper()) for p in extract_courses_codes(prereq_text)]
         for p in prereqs:
             G.add_edge(p, course)
 
@@ -35,40 +36,53 @@ def plot_course_dependency_graph(subject_code, completed_courses, save_path="cou
     for c in completed_courses:
         if c in G:
             related.add(c)
-            related.update(nx.descendants(G, c))   # courses unlocked by completed ones
-            related.update(nx.ancestors(G, c))     # prerequisites of completed ones (optional)
+            related.update(nx.descendants(G, c))
+            related.update(nx.ancestors(G, c))
         else:
             print(f"Warning: {c} not found in graph nodes, skipping.")
         
-    G = G.subgraph(related).copy()
+    if related:
+        G = G.subgraph(related).copy()
 
     node_colors = []
     for n in G.nodes:
         if n in completed_courses:
-            node_colors.append("lightgreen")  # completed
+            node_colors.append("lightgreen") 
         elif n in eligible:
-            node_colors.append("khaki")       # eligible next
+            node_colors.append("khaki")   
         else:
-            node_colors.append("lightcoral")  # blocked
+            node_colors.append("lightcoral")
+
+    edge_colors = ["mediumseagreen" if u in completed_courses else "lightgray" for u, v in G.edges()]
 
     try:
         pos = graphviz_layout(G, prog="dot", args="-Grankdir=TB")
     except Exception as e:
         print("Graphviz layout failed, using spring layout instead:", e)
-        pos = nx.spring_layout(G, k=0.5, iterations=50)
+        pos = nx.spring_layout(G, k=0.7, iterations=60)
 
-    plt.figure(figsize=(14, 10))
+    plt.figure(figsize=(15, 10))
     nx.draw(
         G, pos,
         with_labels=True,
         node_color=node_colors,
-        node_size=900,
-        font_size=8,
-        arrowsize=10,
-        edge_color="lightgray",
+        edge_color=edge_colors,
+        node_size=1200,
+        font_size=9,
+        arrowsize=12,
+        width=1.2,
     )
-    plt.title(f"{subject_code.upper()} Course Prerequisite Graph (with Eligibility)", fontsize=12)
-    plt.tight_layout()
+
+    nx.draw_networkx_edge_labels(
+        G, pos,
+        edge_labels={(u, v): "prereq" for (u, v) in G.edges()},
+        font_size=6,
+        label_pos=0.5
+    )
+
+    plt.title(f"{subject_code.upper()} Course Prerequisite Graph (with Eligibility)", fontsize=13, pad=15)
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.05)
+
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     print(f"Graph saved to {os.path.abspath(save_path)}")
     plt.show()
