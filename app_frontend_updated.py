@@ -51,7 +51,7 @@ if st.button("Check My Eligibility"):
                 )
                 eligible_df = eligible_df.merge(term_summary, on="Course Code", how="left").fillna({"Term Offered": "—"})
             else:
-                st.warning("⚠️ Offerings file missing 'Course Code' or 'Term' columns.")
+                st.warning(" Offerings file missing 'Course Code' or 'Term' columns.")
         else:
             st.info(f"No offerings file found for {subject_code}. Run the scraper first.")
 
