@@ -1,0 +1,264 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+from pathlib import Path
+
+def scrape_course_catalog(subject_code, save_dir="datasets"):
+    base_dir = Path(__file__).resolve().parent
+    datasets_dir = base_dir / "datasets"
+    os.makedirs(datasets_dir, exist_ok=True)
+
+    
+    output_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
+
+    
+    url = f"https://catalog.ucdavis.edu/courses-subject-code/{subject_code.lower()}/"
+    print(f"Scraping {url}")
+
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        print(f"Failed to load page: HTTP {response.status_code}")
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    courses = soup.find_all("div", class_="courseblock")
+
+    data = []
+    for course in courses:
+        code = course.find("span", class_="detail-code")
+        title = course.find("span", class_="detail-title")
+        units = course.find("span", class_="detail-hours_html")
+        desc = course.find("div", class_="courseblockextra")
+        prereq = course.find(lambda tag: tag.has_attr("class") and any("detail-prerequisite" in c for c in tag["class"]))
+
+        data.append({
+            "Course Code": code.get_text(strip=True) if code else "",
+            "Title": title.get_text(strip=True) if title else "",
+            "Units": units.get_text(strip=True) if units else "",
+            "Description": desc.get_text(strip=True) if desc else "",
+            "Prerequisites": prereq.get_text(strip=True).replace("Prerequisite(s):", "").strip() if prereq else ""
+        })
+
+    
+    df = pd.DataFrame(data)
+    df.to_csv(output_path, index=False)
+    print(f"✅ Scraped {len(df)} {subject_code.upper()} courses → {output_path}")
+    return output_path
+
+
+
+def extract_courses_codes(text):
+
+    if pd.isna(text):
+        return[]
+    return re.findall(r"[A-Z]{3}\s?\d{3}[A-Z]", text)
+
+def can_take_course(course_code, completed_courses, df):
+    row = df[df["Course Code"] == course_code]
+    if row.empty:
+        return f"{course_code} not found in catalog."
+    
+    prereq_text = row.iloc[0]["Prerequisites"]
+    if not prereq_text:
+        return f"You can take {course_code} - no prerequisites."
+    
+    prereq_codes = extract_courses_codes(prereq_text)
+    if not prereq_codes:
+        return f"You can take {course_code} - no specific course prerequisites"
+    
+    unmet = [c for c in prereq_codes if c not in completed_courses]
+    if unmet:
+        return f" You need to complete {','.join(unmet)} before taking {course_code}."
+    else:
+        return f"You meet the prerequisites for {course_code}."
+    
+
+def get_subject_prefix(course_code):
+    match = re.match(r"([A-Z]{3})", course_code.strip().upper())
+    return match.group(1).lower() if match else None
+
+def load_or_scrape_catalog(subject_code):
+
+    base_dir = Path(__file__).resolve().parent  
+    datasets_dir = base_dir / "datasets"
+    os.makedirs(datasets_dir, exist_ok=True)
+
+    
+    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
+
+   
+    if file_path.exists():
+        print(f"Using cached catalog for {subject_code.upper()}: {file_path}")
+        return pd.read_csv(file_path)
+    else:
+        print(f"Catalog not found for {subject_code.upper()}, scraping latest...")
+        from advisor_backend import scrape_course_catalog
+        scrape_course_catalog(subject_code)
+        return pd.read_csv(file_path)
+
+
+def load_or_scrape_offerings(subject_code):
+    from course_offerings_scraper import scrape_ucdavis_offerings
+
+    base_dir = Path(__file__).resolve().parent
+    datasets_dir = base_dir / "datasets"
+    datasets_dir.mkdir(exist_ok=True)
+
+    file_path = datasets_dir / f"{subject_code.upper()}_all_offerings.csv"
+
+    if file_path.exists():
+        print(f"Using cached offerings for {subject_code.upper()}: {file_path}")
+        return pd.read_csv(file_path)
+
+    df = scrape_ucdavis_offerings(subject_code)
+    df.to_csv(file_path, index=False)
+    return df
+
+
+def advisor_can_take(course_code, completed_courses):
+
+    prefix = get_subject_prefix(course_code)
+    if not prefix:
+        return "Could not determine department for course code."
+    
+    df = load_or_scrape_catalog(prefix)
+    return can_take_course(course_code.upper(), [c.upper() for c in completed_courses], df)
+
+
+def suggest_eligible_courses(subject_code, completed_courses, student_level="undergrad"):
+    df = load_or_scrape_catalog(subject_code)
+    completed = [c.upper() for c in completed_courses]
+
+    eligible = []
+    blocked = [] 
+
+    if student_level == "undergrad":
+        min_num, max_num = 1, 199
+    elif student_level == "grad":
+        min_num, max_num = 200, 499
+    else:
+        min_num, max_num = 1, 499 
+
+    for _, row in df.iterrows():
+        course_code = str(row["Course Code"]).upper()
+        title = str(row.get("Title", "")).strip()
+        prereq_text = str(row.get("Prerequisites", ""))
+
+        match = re.search(r"\d+", course_code)
+        if not match:
+            continue
+        course_num = int(match.group())
+        if not (min_num <= course_num <= max_num):
+            continue
+        if course_code in completed:
+            continue
+
+        prereqs = extract_courses_codes(prereq_text)
+
+        if not prereqs:
+            eligible.append({"Course Code": course_code, "Title": title})
+        else:
+            unmet = [p for p in prereqs if p not in completed]
+            if not unmet:
+                eligible.append({"Course Code": course_code, "Title": title})
+            else:
+                blocked.append({"Course": course_code, "Missing": unmet})
+
+    eligible_df = pd.DataFrame(eligible)
+    blocked_df = pd.DataFrame(blocked)
+
+    print(f"You are eligible to take {len(eligible)} {subject_code.upper()} courses.\n")
+
+    if not eligible_df.empty:
+        print("Here are the courses you can take next:\n")
+        for _, row in eligible_df.iterrows():
+            print(f"  • {row['Course Code']}: {row['Title']}")
+    else:
+        print("No eligible courses found — you may need more prerequisites first.")
+
+    print(f"{len(blocked)} courses still have unmet prerequisites.\n")
+
+    return eligible_df, blocked_df
+
+def extract_codes(text):
+    """Normalize and extract course codes like STA 013 or ECS 020."""
+    if not isinstance(text, str):
+        return []
+    return re.findall(r"[A-Z]{2,4}\s?\d{3}[A-Z]?", text.upper())
+
+
+def classify_intent(user_text):
+    text = user_text.lower()
+
+    # Prerequisite intent
+    if "prereq" in text or "can i take" in text or "eligible for" in text:
+        return "prerequisite_check"
+
+    # Recommendation intent
+    if "recommend" in text or "next class" in text or "what should i take next" in text:
+        return "recommendation"
+
+    # Course info intent
+    if "info" in text or "information" in text or "description" in text:
+        return "course_info"
+
+    return "small_talk"
+
+
+def chatbot_engine(message, completed_courses):
+    intent = classify_intent(message)
+    codes = extract_codes(message)
+
+    # ------- Prerequisite check -------
+    if intent == "prerequisite_check":
+        if not codes:
+            return "Which course do you want to check prerequisites for?"
+        
+        return advisor_can_take(codes[0], completed_courses)
+
+    # ------- Course info -------
+    if intent == "course_info":
+        if not codes:
+            return "Which course do you want info about?"
+        return chatbot_course_info(codes[0])
+
+    # ------- Recommendations -------
+    if intent == "recommendation":
+        if not completed_courses:
+            return "Tell me at least one course you've taken so I know your area (e.g., STA 013)."
+
+        prefix = get_subject_prefix(completed_courses[-1])
+        if not prefix:
+            return "I couldn't determine your subject area from your completed courses."
+
+        eligible_df, blocked_df = suggest_eligible_courses(prefix, completed_courses)
+        if eligible_df.empty:
+            return "Right now I don't see any eligible courses based on your completed list."
+
+        return "You are eligible for: " + ", ".join(list(eligible_df["Course Code"])[:10])
+
+    # ------- Fallback -------
+    return "I can help with prerequisites, course info, or recommendations!"
+
+
+def chatbot_course_info(course_code):
+    """Get course info using backend scraped CSVs."""
+    prefix = get_subject_prefix(course_code)
+    if not prefix:
+        return "I couldn't identify the subject for that course."
+
+    df = load_or_scrape_catalog(prefix)
+    row = df[df["Course Code"] == course_code.upper()]
+
+    if row.empty:
+        return f"No info found for {course_code.upper()}."
+
+    title = row.iloc[0]["Title"]
+    desc = row.iloc[0]["Description"]
+
+    return f"{course_code.upper()}: {title}\n\n{desc}"
