@@ -2,13 +2,14 @@ import pandas as pd
 import numpy as np
 import re
 
-def cleanCSV(csv): #csv is the dataframe
-    csv['Title'] = cleanTitle(csv['Title'])
-    csv['Units'] = cleanUnits(csv['Units'])
-    csv['Learning Activities'] = learnActivities(csv['Description'])
-    csv['Grade Mode'] = gradeMode(csv['Description'])
-    csv['General Education'] = genEd(csv['Description'])
-    return csv
+def cleanCSV(csv): #csv is the dataframe (pd.read_csv('file.csv'))
+    d = csv.copy()
+    d['Title'] = cleanTitle(d['Title'])
+    d['Units'] = cleanUnits(d['Units'])
+    d['Learning Activities'] = learnActivities(d['Description'])
+    d['Grade Mode'] = gradeMode(d['Description'])
+    d['General Education'] = genEd(d['Description'])
+    return d
 
 def cleanTitle(titles):
     rx = r"^—\u00A0([A-Za-z &:+,'-]+).*"
