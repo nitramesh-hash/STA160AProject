@@ -52,11 +52,17 @@ def scrape_course_catalog(subject_code, save_dir="datasets"):
 
 
 
-def extract_courses_codes(text):
+def extract_codes(text):
+    t = text.upper()
+    raw = re.findall(r"\b([A-Z]{2,4})\s*0?(\d{1,3})([A-Z]?)\b", t)
 
-    if pd.isna(text):
-        return[]
-    return re.findall(r"[A-Z]{3}\s?\d{3}[A-Z]", text)
+    normalized = []
+    for dept, num, suf in raw:
+        code = f"{dept} {num.zfill(3)}{suf}"
+        normalized.append(code)
+    return normalized
+
+
 
 def can_take_course(course_code, completed_courses, df):
     row = df[df["Course Code"] == course_code]
@@ -67,7 +73,7 @@ def can_take_course(course_code, completed_courses, df):
     if not prereq_text:
         return f"You can take {course_code} - no prerequisites."
     
-    prereq_codes = extract_courses_codes(prereq_text)
+    prereq_codes = extract_codes(prereq_text)
     if not prereq_codes:
         return f"You can take {course_code} - no specific course prerequisites"
     
@@ -82,172 +88,282 @@ def get_subject_prefix(course_code):
     match = re.match(r"([A-Z]{3})", course_code.strip().upper())
     return match.group(1).lower() if match else None
 
-def load_or_scrape_catalog(subject_code):
 
+def load_or_scrape_catalog(subject_code, force_refresh=False):
     base_dir = Path(__file__).resolve().parent  
-    datasets_dir = base_dir / "datasets"
-    os.makedirs(datasets_dir, exist_ok=True)
-
-    
-    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
-
-   
-    if file_path.exists():
-        print(f"Using cached catalog for {subject_code.upper()}: {file_path}")
-        return pd.read_csv(file_path)
-    else:
-        print(f"Catalog not found for {subject_code.upper()}, scraping latest...")
-        from advisor_backend import scrape_course_catalog
-        scrape_course_catalog(subject_code)
-        return pd.read_csv(file_path)
-
-
-def load_or_scrape_offerings(subject_code):
-    from course_offerings_scraper import scrape_ucdavis_offerings
-
-    base_dir = Path(__file__).resolve().parent
     datasets_dir = base_dir / "datasets"
     datasets_dir.mkdir(exist_ok=True)
 
-    file_path = datasets_dir / f"{subject_code.upper()}_all_offerings.csv"
+    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
 
-    if file_path.exists():
-        print(f"Using cached offerings for {subject_code.upper()}: {file_path}")
+    if file_path.exists() and not force_refresh:
+        print(f"Using cached catalog for {subject_code.upper()}: {file_path}")
         return pd.read_csv(file_path)
 
-    df = scrape_ucdavis_offerings(subject_code)
-    df.to_csv(file_path, index=False)
-    return df
+    print(f"Refreshing catalog for {subject_code.upper()}...")
+    scrape_course_catalog(subject_code)
+    return pd.read_csv(file_path)
 
 
-def advisor_can_take(course_code, completed_courses):
 
-    prefix = get_subject_prefix(course_code)
-    if not prefix:
-        return "Could not determine department for course code."
+def normalize_course_code(raw):
+    """
+    Convert messy input like 'sta13', 'STA 13A', 'ecs32v' → standardized 'STA 013A'
+    """
+    if not isinstance(raw, str):
+        return ""
+
+    t = raw.upper().strip()
+
     
-    df = load_or_scrape_catalog(prefix)
-    return can_take_course(course_code.upper(), [c.upper() for c in completed_courses], df)
+    t = re.sub(r"[^A-Z0-9]", "", t)
+
+    # Match SUBJECT + NUMBER + optional SUFFIX
+    m = re.match(r"([A-Z]{2,4})(\d{1,3})([A-Z]?)", t)
+    if not m:
+        return ""
+
+    subj = m.group(1)
+    num = m.group(2).zfill(3)      
+    suf = m.group(3)              
+
+    return f"{subj} {num}{suf}"
+
+import re
+
+def parse_prereq_structure(text):
+    """
+    Parse prerequisite text from the UC Davis catalog into AND/OR groups.
+
+    Returns a list of OR-groups. Example:
+      "STA 013 or STA 013Y; MAT 016A or MAT 017A"
+    -> [
+         ["STA 013", "STA 013Y"],           # need ANY of these
+         ["MAT 016A", "MAT 017A"]           # AND ANY of these
+       ]
+    """
+
+    if not isinstance(text, str) or not text.strip():
+        return []
+
+    # 1. Normalize
+    t = text.upper()
+    t = t.replace("\xa0", " ")          # non-breaking spaces → normal
+    t = re.sub(r"\s+", " ", t)          # collapse spaces
+
+    # 2. Fix mashed OR tokens (e.g. "ORSTA", "STA 131AOR")
+    t = re.sub(r"OR(?=[A-Z])", "OR ", t)          # ORSTA → OR STA
+    t = re.sub(r"(?<=[A-Z0-9])OR", " OR", t)      # STA131AOR → STA131A OR
+
+    # 3. Drop "preferred" and "recommended" chunks completely
+    #    (we don't want to treat them as hard prerequisites)
+    t = re.sub(r"[^;,.]*PREFERRED", "", t)
+    t = re.sub(r"[^;,.]*RECOMMENDED", "", t)
+
+    # 4. Remove the phrase "OR BETTER"
+    t = t.replace("OR BETTER", "")
+
+    # 5. Remove "(CAN BE CONCURRENT)" / "CAN BE CONCURRENT"
+    t = t.replace("CAN BE CONCURRENT", "")
+
+    # 6. Strip grade letters AFTER course codes, but KEEP course suffix letters.
+    #    Patterns in your CSV:
+    #      "STA 015AC-"  -> STA 015A + grade C-
+    #      "STA 032C-"   -> STA 032 + grade C-
+    #      "MAT 016B C-" -> MAT 016B + grade C-
+    t = re.sub(r"\b([A-Z]{2,4}\s*\d{3}[A-Z]?)\s*[ABCDF][+-]?\b",r"\1", t)
+
+    # 7. Turn parentheses into AND separators; they mostly mark separate blocks
+    t = t.replace("(", ";").replace(")", ";")
+
+    # Clean spacing again after edits
+    t = re.sub(r"\s+", " ", t)
+
+    # 8. Split on ';' or '.' to get AND-blocks
+    blocks = [b.strip() for b in re.split(r"[;\.]", t) if b.strip()]
+
+    prereq_groups = []
+
+    for block in blocks:
+        # 9. Within each block we only care about course codes;
+        #    ORs are implicit inside the block.
+        codes = re.findall(r"\b[A-Z]{2,4}\s*\d{3}[A-Z]?\b", block)
+        if not codes:
+            continue
+
+        norm_codes = []
+        for c in codes:
+            # Normalize spacing: "STA 013Y" not "STA  013Y"
+            c = re.sub(r"\s+", " ", c).strip()
+            if c not in norm_codes:
+                norm_codes.append(c)
+
+        if norm_codes:
+            prereq_groups.append(norm_codes)
+
+    return prereq_groups
+
 
 
 def suggest_eligible_courses(subject_code, completed_courses, student_level="undergrad"):
+    """
+    Determine which courses a student can take based on completed courses.
+    Uses AND/OR logic from parse_prereq_structure().
+    """
+
     df = load_or_scrape_catalog(subject_code)
-    completed = [c.upper() for c in completed_courses]
+    completed = {c.upper().strip() for c in completed_courses}
 
     eligible = []
-    blocked = [] 
+    blocked = []
 
+    # Level filter
     if student_level == "undergrad":
         min_num, max_num = 1, 199
     elif student_level == "grad":
         min_num, max_num = 200, 499
     else:
-        min_num, max_num = 1, 499 
+        min_num, max_num = 1, 499
 
     for _, row in df.iterrows():
-        course_code = str(row["Course Code"]).upper()
-        title = str(row.get("Title", "")).strip()
-        prereq_text = str(row.get("Prerequisites", ""))
+        course_code = row["Course Code"].upper().strip()
+        title = row.get("Title", "").strip()
+        prereq_text = str(row.get("Prerequisites", "")).strip()
 
-        match = re.search(r"\d+", course_code)
-        if not match:
-            continue
-        course_num = int(match.group())
-        if not (min_num <= course_num <= max_num):
-            continue
+
+        # Skip if already completed
         if course_code in completed:
             continue
 
-        prereqs = extract_courses_codes(prereq_text)
+        # Extract numeric part to filter by level
+        match = re.search(r"\d+", course_code)
+        if not match:
+            continue
+        num = int(match.group())
+        if not (min_num <= num <= max_num):
+            continue
 
-        if not prereqs:
-            eligible.append({"Course Code": course_code, "Title": title})
+        # Parse prereqs
+        prereq_groups = parse_prereq_structure(prereq_text)
+
+        # If no prereqs → eligible
+        if not prereq_groups:
+            eligible.append({
+                "Course Code": course_code,
+                "Title": title,
+                "Missing": []
+            })
+            continue
+
+        unmet = []
+
+        # AND-groups: each group must be satisfied
+        for group in prereq_groups:
+
+            # OR-group: student needs *any one* of these
+            satisfied = any(req in completed for req in group)
+
+            if not satisfied:
+                unmet.append(group)
+
+        # Unmet prerequisites → blocked
+        if unmet:
+            blocked.append({
+                "Course": course_code,
+                "Missing": unmet
+            })
         else:
-            unmet = [p for p in prereqs if p not in completed]
-            if not unmet:
-                eligible.append({"Course Code": course_code, "Title": title})
-            else:
-                blocked.append({"Course": course_code, "Missing": unmet})
+            eligible.append({
+                "Course Code": course_code,
+                "Title": title,
+                "Missing": []
+            })
 
     eligible_df = pd.DataFrame(eligible)
     blocked_df = pd.DataFrame(blocked)
 
+
     print(f"You are eligible to take {len(eligible)} {subject_code.upper()} courses.\n")
-
-    if not eligible_df.empty:
-        print("Here are the courses you can take next:\n")
-        for _, row in eligible_df.iterrows():
-            print(f"  • {row['Course Code']}: {row['Title']}")
-    else:
-        print("No eligible courses found — you may need more prerequisites first.")
-
-    print(f"{len(blocked)} courses still have unmet prerequisites.\n")
 
     return eligible_df, blocked_df
 
-def extract_codes(text):
-    """Normalize and extract course codes like STA 013 or ECS 020."""
-    if not isinstance(text, str):
-        return []
-    return re.findall(r"[A-Z]{2,4}\s?\d{3}[A-Z]?", text.upper())
+
+
+def advisor_can_take(course_code, completed_courses):
+
+    course_code = normalize_course_code(course_code)
+    completed = {normalize_course_code(c) for c in completed_courses}
+
+
+    prefix = get_subject_prefix(course_code)
+    if not prefix:
+        return "I could not determine the department for that course."
+
+    df = load_or_scrape_catalog(prefix)
+
+    # Match exact row
+    row = df[df["Course Code"].str.upper() == course_code]
+    if row.empty:
+        return f"I couldn't find {course_code} in the catalog."
+
+    prereq_text = str(row.iloc[0]["Prerequisites"] or "").strip()
+    title = row.iloc[0].get("Title", "").strip()
+
+    # Parse prereqs into AND groups of OR lists
+    groups = parse_prereq_structure(prereq_text)
+
+    # No prerequisites (eligible)
+    if not groups:
+        return f"Yes — you can take **{course_code} ({title})**. This course has no prerequisites."
+
+    unmet = []
+
+    # Check every AND-group
+    for group in groups:
+        if not any(req in completed for req in group):
+            unmet.append(group)
+
+    # If nothing missing (eligible)
+    if not unmet:
+        return (
+            f"Yes — you meet all prerequisites for **{course_code} ({title})**."
+        )
+
+    # Format missing prereqs for output
+    formatted_missing = [" OR ".join(g) for g in unmet]
+    missing_str = "\n".join(f"- {m}" for m in formatted_missing)
+
+    return (
+        f"No — you cannot take **{course_code} ({title})** yet.\n\n"
+        f"You are missing the following prerequisites:\n"
+        f"{missing_str}"
+    )
+
 
 
 def classify_intent(user_text):
     text = user_text.lower()
 
-    # Prerequisite intent
-    if "prereq" in text or "can i take" in text or "eligible for" in text:
+    # Asking about prerequisites of a course (NOT eligibility)
+    if "prerequisite" in text or "prereq" in text or "requirements" in text:
+        return "prereq_info"
+
+    # Asking if THEY PERSONALLY can take the course
+    if "can i take" in text or "eligible" in text or "am i allowed" in text:
         return "prerequisite_check"
 
-    # Recommendation intent
-    if "recommend" in text or "next class" in text or "what should i take next" in text:
+    # Asking about next classes
+    if "recommend" in text or "next class" in text or "what should i take" in text:
         return "recommendation"
 
-    # Course info intent
+    # Asking about the description/info
     if "info" in text or "information" in text or "description" in text:
         return "course_info"
 
     return "small_talk"
 
 
-def chatbot_engine(message, completed_courses):
-    intent = classify_intent(message)
-    codes = extract_codes(message)
-
-    # ------- Prerequisite check -------
-    if intent == "prerequisite_check":
-        if not codes:
-            return "Which course do you want to check prerequisites for?"
-        
-        return advisor_can_take(codes[0], completed_courses)
-
-    # ------- Course info -------
-    if intent == "course_info":
-        if not codes:
-            return "Which course do you want info about?"
-        return chatbot_course_info(codes[0])
-
-    # ------- Recommendations -------
-    if intent == "recommendation":
-        if not completed_courses:
-            return "Tell me at least one course you've taken so I know your area (e.g., STA 013)."
-
-        prefix = get_subject_prefix(completed_courses[-1])
-        if not prefix:
-            return "I couldn't determine your subject area from your completed courses."
-
-        eligible_df, blocked_df = suggest_eligible_courses(prefix, completed_courses)
-        if eligible_df.empty:
-            return "Right now I don't see any eligible courses based on your completed list."
-
-        return "You are eligible for: " + ", ".join(list(eligible_df["Course Code"])[:10])
-
-    # ------- Fallback -------
-    return "I can help with prerequisites, course info, or recommendations!"
-
-
 def chatbot_course_info(course_code):
-    """Get course info using backend scraped CSVs."""
     prefix = get_subject_prefix(course_code)
     if not prefix:
         return "I couldn't identify the subject for that course."
@@ -261,4 +377,68 @@ def chatbot_course_info(course_code):
     title = row.iloc[0]["Title"]
     desc = row.iloc[0]["Description"]
 
-    return f"{course_code.upper()}: {title}\n\n{desc}"
+    return f"**{course_code.upper()} — {title}**\n\n{desc}"
+
+
+
+def chatbot_list_prereqs(course_code):
+    code = course_code.upper().strip()
+    prefix = get_subject_prefix(code)
+
+    df = load_or_scrape_catalog(prefix)
+    row = df[df["Course Code"] == code]
+
+    if row.empty:
+        return f"I couldn't find {code} in the catalog."
+
+    title = row.iloc[0]["Title"]
+    raw_text = str(row.iloc[0]["Prerequisites"] or "")
+    groups = parse_prereq_structure(raw_text)
+
+    if not groups:
+        return f"**{code} ({title})** has **no prerequisites**."
+
+    formatted = "\n".join("- " + " OR ".join(g) for g in groups)
+
+    return (
+        f"**Prerequisites for {code} ({title}):**\n\n"
+        f"{formatted}"
+    )
+
+
+def chatbot_engine(message, completed_courses):
+    intent = classify_intent(message)
+    codes = [normalize_course_code(c) for c in extract_codes(message)]
+    codes = [c for c in codes if c]  
+
+
+    # Must include a course code for these intents
+    if intent in {"prerequisite_check", "prereq_info", "course_info"} and not codes:
+        return "Which course are you asking about?"
+
+    # "What are the prerequisites for MAT 167?"
+    if intent == "prereq_info":
+        return chatbot_list_prereqs(codes[0])
+
+    # "Can I take MAT 167?"
+    if intent == "prerequisite_check":
+        return advisor_can_take(codes[0], completed_courses)
+
+    # "Give me info about STA 106"
+    if intent == "course_info":
+        return chatbot_course_info(codes[0])
+
+    # Recommendations
+    if intent == "recommendation":
+        if not completed_courses:
+            return "Tell me at least one course you've taken first."
+        prefix = get_subject_prefix(completed_courses[-1])
+        eligible, blocked = suggest_eligible_courses(prefix, completed_courses)
+
+        if eligible.empty:
+            return "You are not eligible for any new courses right now."
+
+        return "You are eligible for: " + ", ".join(list(eligible["Course Code"])[:10])
+
+    return "I can help with prerequisites, course info, or recommendations!"
+
