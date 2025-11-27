@@ -3,70 +3,104 @@ import pandas as pd
 from pathlib import Path
 import sys
 
-
-st.set_page_config(page_title="UC Davis AI Advisor", page_icon="🎓", layout="wide")
+from components.header import render_header
+from components.sidebar import render_sidebar
+from components.course_tables import render_results
 
 backend_path = Path(__file__).resolve().parents[1] / "backend"
 sys.path.append(str(backend_path))
 
-from advisor_backend import suggest_eligible_courses
-from components.header import render_header
-from components.sidebar import render_sidebar
+from advisor_backend import suggest_eligible_courses, chatbot_engine
+
+
+
+st.set_page_config(
+    page_title="UC Davis AI Advisor",
+    page_icon="🎓",
+    layout="wide"
+)
 
 
 render_header()
 render_sidebar()
 
 
-col1, col2 = st.columns([1, 2])
-with col1:
-    subject_code = st.text_input("Subject Code (e.g., STA):", value="STA").upper()
-with col2:
-    completed_courses = st.text_area("Completed Courses:", value="STA 013, MAT 016B")
+
+tab1, tab2 = st.tabs(["Course Eligibility", "AI Chatbot"])
 
 
-level = st.radio("Select your academic level:", ["Undergraduate", "Graduate"], horizontal=True)
-level_key = "undergrad" if level == "Undergraduate" else "grad"
+with tab1:
+    st.header("Course Eligibility Checker")
+
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        subject_code = st.text_input(
+            "Subject Code (e.g., STA):",
+            value="STA",
+            key="subject_code_input"
+        ).upper()
+
+    with col2:
+        completed_courses_text = st.text_area(
+            "Completed Courses:",
+            value="STA 013",
+            key="completed_courses_input"
+        )
+
+    level = st.radio(
+        "Select your academic level:",
+        ["Undergraduate", "Graduate"],
+        horizontal=True,
+        key="academic_level_radio"
+    )
+
+    level_key = "undergrad" if level == "Undergraduate" else "grad"
+
+    if st.button("Check My Eligibility", key="check_button"):
+        completed_list = [c.strip().upper() for c in completed_courses_text.split(",")]
+
+        with st.spinner("Analyzing your eligibility..."):
+            eligible_df, blocked_df = suggest_eligible_courses(
+                subject_code,
+                completed_list,
+                level_key
+            )
+
+        render_results(eligible_df, blocked_df, subject_code)
 
 
-if st.button("Check My Eligibility"):
-    completed_list = [c.strip().upper() for c in completed_courses.split(",")]
 
-    with st.spinner("Analyzing your eligibility..."):
-        eligible_df, blocked_df = suggest_eligible_courses(subject_code, completed_list, level_key)
+with tab2:
+    st.header("AI Academic Advisor Chatbot")
 
-        offerings_path = backend_path / "datasets" / f"{subject_code}_all_offerings.csv"
-        if offerings_path.exists():
-            off_df = pd.read_csv(offerings_path)
-            if "Course Code" in off_df.columns and "Term" in off_df.columns:
-                off_df["Course Code"] = off_df["Course Code"].astype(str).str.strip().str.upper()
-                eligible_df["Course Code"] = eligible_df["Course Code"].astype(str).str.strip().str.upper()
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
 
+    st.subheader("Your Completed Courses")
+    completed_sidebar = st.text_area(
+        "Completed Courses (comma separated):",
+        "MAT 021A, STA 013"
+    )
+    completed_for_chat = [c.strip().upper() for c in completed_sidebar.split(",")]
 
-                term_summary = (
-                    off_df.groupby("Course Code")["Term"]
-                    .apply(lambda x: ", ".join(sorted(set(x))))
-                    .reset_index()
-                    .rename(columns={"Term": "Term Offered"})
-                )
-                eligible_df = eligible_df.merge(term_summary, on="Course Code", how="left").fillna({"Term Offered": "—"})
-            else:
-                st.warning(" Offerings file missing 'Course Code' or 'Term' columns.")
-        else:
-            st.info(f"No offerings file found for {subject_code}. Run the scraper first.")
+    st.divider()
 
 
-        st.markdown("### Eligible Courses and When Offered")
-        if not eligible_df.empty:
-            st.dataframe(eligible_df[["Course Code", "Title", "Term Offered"]], use_container_width=True)
-        else:
-            st.write("No eligible courses found.")
+    for msg in st.session_state["messages"]:
+        st.chat_message(msg["role"]).write(msg["content"])
 
-        st.markdown("### Blocked Courses (Unmet Prerequisites)")
-        if blocked_df is not None and not blocked_df.empty:
-            cols = [c for c in ["Course Code", "Title", "Course", "Missing"] if c in blocked_df.columns]
-            st.dataframe(blocked_df[cols], use_container_width=True)
-        else:
-            st.success("No blocked courses found!")
 
+    user_msg = st.chat_input("Ask me anything about the courses, requirements, or planning!")
+
+
+    if user_msg: 
+
+        st.session_state["messages"].append({"role": "user", "content": user_msg})
+        st.chat_message("user").write(user_msg)
+
+
+        response = chatbot_engine(user_msg, completed_for_chat)
+
+        st.session_state["messages"].append({"role": "assistant", "content": response})
+        st.chat_message("assistant").write(response)
 
