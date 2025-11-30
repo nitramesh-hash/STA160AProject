@@ -88,6 +88,24 @@ def get_subject_prefix(course_code):
     match = re.match(r"([A-Z]{3})", course_code.strip().upper())
     return match.group(1).lower() if match else None
 
+def load_or_scrape_catalog(subject_code):
+
+    base_dir = Path(__file__).resolve().parent  
+    datasets_dir = base_dir / "datasets"
+    os.makedirs(datasets_dir, exist_ok=True)
+
+    
+    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
+
+   
+    if file_path.exists():
+        print(f"Using cached catalog for {subject_code.upper()}: {file_path}")
+        return pd.read_csv(file_path)
+    else:
+        print(f"Catalog not found for {subject_code.upper()}, scraping latest...")
+        from advisor_backend import scrape_course_catalog
+        scrape_course_catalog(subject_code)
+        return pd.read_csv(file_path)
 
 def normalize_course_code(raw):
     if not isinstance(raw, str):
