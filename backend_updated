@@ -5,20 +5,16 @@ import pandas as pd
 import re
 from pathlib import Path
 
+
 def scrape_course_catalog(subject_code, save_dir="datasets"):
     base_dir = Path(__file__).resolve().parent
-    datasets_dir = base_dir / "datasets"
+    datasets_dir = base_dir / save_dir
     os.makedirs(datasets_dir, exist_ok=True)
 
-    
-    output_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
-
-    
     url = f"https://catalog.ucdavis.edu/courses-subject-code/{subject_code.lower()}/"
     print(f"Scraping {url}")
 
-    
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
@@ -34,22 +30,69 @@ def scrape_course_catalog(subject_code, save_dir="datasets"):
         title = course.find("span", class_="detail-title")
         units = course.find("span", class_="detail-hours_html")
         desc = course.find("div", class_="courseblockextra")
-        prereq = course.find(lambda tag: tag.has_attr("class") and any("detail-prerequisite" in c for c in tag["class"]))
+        prereq = course.find(
+            lambda tag: tag.has_attr("class")
+            and any("detail-prerequisite" in c for c in tag["class"])
+        )
 
-        data.append({
-            "Course Code": code.get_text(strip=True) if code else "",
-            "Title": title.get_text(strip=True) if title else "",
-            "Units": units.get_text(strip=True) if units else "",
-            "Description": desc.get_text(strip=True) if desc else "",
-            "Prerequisites": prereq.get_text(strip=True).replace("Prerequisite(s):", "").strip() if prereq else ""
-        })
+        data.append(
+            {
+                "Course Code": code.get_text(strip=True) if code else "",
+                "Title": title.get_text(strip=True) if title else "",
+                "Units": units.get_text(strip=True) if units else "",
+                "Description": desc.get_text(strip=True) if desc else "",
+                "Prerequisites": (
+                    prereq.get_text(strip=True)
+                    .replace("Prerequisite(s):", "")
+                    .strip()
+                    if prereq
+                    else ""),})
 
-    
     df = pd.DataFrame(data)
-    df.to_csv(output_path, index=False)
-    print(f"✅ Scraped {len(df)} {subject_code.upper()} courses → {output_path}")
-    return output_path
+    return df
 
+
+def cleanCSV(csv): 
+    d = csv.copy()
+    d["Title"] = cleanTitle(d["Title"])
+    d["Units"] = cleanUnits(d["Units"])
+    d["Learning Activities"] = learnActivities(d["Description"])
+    d["Grade Mode"] = gradeMode(d["Description"])
+    d["General Education"] = genEd(d["Description"])
+    return d
+
+
+def cleanTitle(titles):
+    rx = r"^—\u00A0([A-Za-z &:+,'-]+).*"
+    titles = titles.str.extract(rx, expand=False).str.strip()
+    return titles
+
+
+def cleanUnits(units):
+    rx0 = r"^\(([0-9]).*"
+    units = units.str.extract(rx0, expand=False).astype(int)
+    return units
+
+
+def learnActivities(descriptions):
+    rx2 = r"(?<=Learning Activities:)([^.]+)"
+    act = descriptions.str.extract(rx2)
+    return act
+
+
+def gradeMode(descriptions):
+    rx3 = r"(?<=Grade Mode:)([^.]+)"
+    mode = descriptions.str.extract(rx3)
+    mode[mode == "P/NP only"] = "Pass/No Pass only"
+    return mode
+
+
+def genEd(descriptions):
+    rx4 = r"(?<=General Education:)([^.]+)"
+    genEd = descriptions.str.extract(rx4)
+    rx5 = r"(?<=\()[A-Z]+(?=\))"
+    l = genEd[0].str.findall(rx5).str.join(", ")
+    return l
 
 
 def extract_codes(text):
@@ -60,7 +103,33 @@ def extract_codes(text):
     for dept, num, suf in raw:
         code = f"{dept} {num.zfill(3)}{suf}"
         normalized.append(code)
+
     return normalized
+
+
+def load_or_scrape_catalog(subject_code, force_refresh=False):
+    base_dir = Path(__file__).resolve().parent
+    datasets_dir = base_dir / "datasets"
+    datasets_dir.mkdir(exist_ok=True)
+
+    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
+
+
+    if file_path.exists() and not force_refresh:
+        print(f"Using cached CLEAN catalog for {subject_code.upper()}: {file_path}")
+        return pd.read_csv(file_path)
+
+    print(f"Refreshing catalog for {subject_code.upper()}...")
+    raw_df = scrape_course_catalog(subject_code)
+
+    if raw_df is None:
+        print("Scrape failed; returning empty DataFrame.")
+        return pd.DataFrame()
+
+    clean_df = cleanCSV(raw_df)
+    clean_df.to_csv(file_path, index=False)
+
+    return clean_df
 
 
 def can_take_course(course_code, completed_courses, df):
@@ -88,24 +157,6 @@ def get_subject_prefix(course_code):
     match = re.match(r"([A-Z]{3})", course_code.strip().upper())
     return match.group(1).lower() if match else None
 
-def load_or_scrape_catalog(subject_code):
-
-    base_dir = Path(__file__).resolve().parent  
-    datasets_dir = base_dir / "datasets"
-    os.makedirs(datasets_dir, exist_ok=True)
-
-    
-    file_path = datasets_dir / f"{subject_code.upper()}_courses.csv"
-
-   
-    if file_path.exists():
-        print(f"Using cached catalog for {subject_code.upper()}: {file_path}")
-        return pd.read_csv(file_path)
-    else:
-        print(f"Catalog not found for {subject_code.upper()}, scraping latest...")
-        from advisor_backend import scrape_course_catalog
-        scrape_course_catalog(subject_code)
-        return pd.read_csv(file_path)
 
 def normalize_course_code(raw):
     if not isinstance(raw, str):
@@ -124,6 +175,8 @@ def normalize_course_code(raw):
 
     return f"{subj} {num}{suf}"
 
+
+
 def parse_prereq_structure(text):
     if not isinstance(text, str) or not text.strip():
         return {"course_groups": [], "special_flags": []}
@@ -138,7 +191,7 @@ def parse_prereq_structure(text):
     if "SENIOR" in raw or "UPPER DIVISION" in raw:
         special_flags.append("senior")
 
-    if "STATISTICS MAJOR" in raw or "RESTRICTED" in raw:
+    if " MAJOR" in raw or "RESTRICTED" in raw:
         special_flags.append("major_restriction")
 
     if "PASS ONE" in raw or "PASS TWO" in raw:
@@ -147,54 +200,49 @@ def parse_prereq_structure(text):
     t = raw
     t = re.sub(r"\s+", " ", t)          # collapse spaces
 
-    # 2. Fix mashed OR tokens (e.g. "ORSTA", "STA 131AOR")
+    
     t = re.sub(r"OR(?=[A-Z])", "OR ", t)          # ORSTA → OR STA
     t = re.sub(r"(?<=[A-Z0-9])OR", " OR", t)      # STA131AOR → STA131A OR
 
-    # 3. Drop "preferred" and "recommended" chunks completely
-    #    (we don't want to treat them as hard prerequisites)
+
     t = re.sub(r"[^;,.]*PREFERRED", "", t)
     t = re.sub(r"[^;,.]*RECOMMENDED", "", t)
 
-    # 4. Remove the phrase "OR BETTER"
+    # Remove the phrase "OR BETTER"
     t = t.replace("OR BETTER", "")
 
-    # 5. Remove "(CAN BE CONCURRENT)" / "CAN BE CONCURRENT"
+    # Remove "(CAN BE CONCURRENT)" / "CAN BE CONCURRENT"
     t = t.replace("(CAN BE CONCURRENT)", "")
     t = t.replace("CAN BE CONCURRENT", "")
 
-    # 6. Strip grade letters AFTER course codes, but KEEP course suffix letters.
-    #    Patterns in your CSV:
-    #      "STA 015AC-"  -> STA 015A + grade C-
-    #      "STA 032C-"   -> STA 032 + grade C-
-    #      "MAT 016B C-" -> MAT 016B + grade C-
+    #  Strip grade letters AFTER course codes
     t = re.sub(
         r"\b([A-Z]{2,4}\s*\d{3}[A-Z]?)\s*[ABCDF][+-]?\b",
         r"\1",
         t
     )
 
-    # 7. Turn parentheses into AND separators; they mostly mark separate blocks
+    # Turn parentheses into AND separators
     t = t.replace("(", ";").replace(")", ";")
 
     # Clean spacing again after edits
     t = re.sub(r"\s+", " ", t)
 
-    # 8. Split on ';' or '.' to get AND-blocks
+    # Split on ';' or '.' to get AND-blocks
     blocks = [b.strip() for b in re.split(r"[;\.]", t) if b.strip()]
 
     prereq_groups = []
 
     for block in blocks:
-        # 9. Within each block we only care about course codes;
-        #    ORs are implicit inside the block.
+        #  Within each block we only care about course codes;
+        #  ORs are implicit inside the block.
         codes = re.findall(r"\b[A-Z]{2,4}\s*\d{3}[A-Z]?\b", block)
         if not codes:
             continue
 
         norm_codes = []
         for c in codes:
-            # Normalize spacing: "STA 013Y" not "STA  013Y"
+            # Normalize spacing
             c = re.sub(r"\s+", " ", c).strip()
             if c not in norm_codes:
                 norm_codes.append(c)
@@ -353,7 +401,7 @@ def advisor_can_take(course_code, completed_courses):
 
     #Eligible
     if not unmet:
-        return f"Yes — you meet **all requirements** for **{course_code} ({title})**."
+        return f"Yes, you meet **all requirements** for **{course_code} ({title})**."
 
 
     formatted_missing = [" OR ".join(g) for g in unmet]
@@ -427,7 +475,7 @@ def chatbot_list_prereqs(course_code):
 
     for flag in flags:
         if flag == "consent":
-            lines.append("- Consent of instructor")
+            lines.append("- Or consent of instructor")
         elif flag == "senior":
             lines.append("- Upper-division/senior standing")
         elif flag == "major_restriction":
@@ -473,3 +521,4 @@ def chatbot_engine(message, completed_courses):
         )
 
     return "I can help with prerequisites, course info, or recommendations!"
+
