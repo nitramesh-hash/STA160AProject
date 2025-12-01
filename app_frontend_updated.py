@@ -11,7 +11,7 @@ backend_path = Path(__file__).resolve().parents[1] / "backend"
 sys.path.append(str(backend_path))
 
 from advisor_backend import suggest_eligible_courses, chatbot_engine
-
+from readTranscript import readTranscript
 
 
 st.set_page_config(
@@ -24,7 +24,16 @@ st.set_page_config(
 render_header()
 render_sidebar()
 
+# Initialize session state keys
+if "completed_courses_input" not in st.session_state:
+    st.session_state.completed_courses_input = ""
+if "new_completed_courses" not in st.session_state:
+    st.session_state.new_completed_courses = None
 
+if ("new_completed_courses" in st.session_state and st.session_state.new_completed_courses is not None):
+    st.session_state.completed_courses_input = st.session_state.new_completed_courses
+    st.session_state.completed_courses_chat_value = st.session_state.new_completed_courses
+    st.session_state.new_completed_courses = None
 
 tab1, tab2 = st.tabs(["Course Eligibility", "AI Chatbot"])
 
@@ -40,12 +49,33 @@ with tab1:
             key="subject_code_input"
         ).upper()
 
+    if st.session_state.new_completed_courses is not None:
+        st.session_state.completed_courses_input = st.session_state.new_completed_courses
+        st.session_state.new_completed_courses = None
+
     with col2:
         completed_courses_text = st.text_area(
-            "Completed Courses:",
-            value="STA 013",
+            "Completed Courses: (e.g., MAT 021A, STA 013)",
             key="completed_courses_input"
         )
+        uploaded_pdf = st.file_uploader(
+        "Upload Transcript (PDF):",
+        type=["pdf"],
+        key="upload_transcript"
+        )
+        
+
+        if uploaded_pdf is not None:
+            if st.button("Process Transcript"):
+                with st.spinner("Processing transcript..."):
+                    transcript = readTranscript(uploaded_pdf)
+                    completed = transcript["Course"].tolist()
+                    completedCourses = ", ".join(completed)
+
+                    st.session_state.new_completed_courses = completedCourses
+                    st.success("Transcript processed!")
+                st.rerun()
+        
 
     level = st.radio(
         "Select your academic level:",
@@ -69,19 +99,24 @@ with tab1:
         render_results(eligible_df, blocked_df, subject_code)
 
 
-
 with tab2:
     st.header("AI Academic Advisor Chatbot")
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
 
+    if "completed_courses_chat_value" not in st.session_state:
+        # Start with new_completed_courses or fallback to completed_courses_input or empty string
+        st.session_state.completed_courses_chat_value = st.session_state.get("completed_courses_input", "")
+
+
     st.subheader("Your Completed Courses")
     completed_sidebar = st.text_area(
         "Completed Courses (comma separated):",
-        "MAT 021A, STA 013"
+        key="completed_courses_chat_value",
     )
-    completed_for_chat = [c.strip().upper() for c in completed_sidebar.split(",")]
+
+    completed_for_chat = [c.strip().upper() for c in (completed_sidebar or "").split(",") if c.strip()]
 
     st.divider()
 
