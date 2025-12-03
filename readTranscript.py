@@ -44,7 +44,7 @@ def extQandInfo(comb):
     # Makess a df with quarters and course info
     df = pd.DataFrame({"Quarter": quarters, "Info": comb})
     # Removes non-course info rows
-    df = df[df['Info'].str.contains(r"([A-Z ]+[0-9]+[A-Z]?[A-Z]?) +([A-Z &/]+) +([A-Z+-]+) +([0-9.]+).*")].reset_index(drop=True)
+    df = df[df['Info'].str.contains(r"([A-Z ]+[0-9]+[A-Z]?[A-Z]?) +([A-Z &/:]+) +([A-Z+-]+) +([0-9.]+).*")].reset_index(drop=True)
     return df
 
 # Gets the course, course title, grade, and units from the info
