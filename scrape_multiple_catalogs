@@ -1,0 +1,59 @@
+def scrape_multiple_catalogs(subject_codes, save_dir="datasets"):
+    os.makedirs(save_dir, exist_ok=True)
+    results = {}
+
+    for subject_code in subject_codes:
+        subject_code = subject_code.lower()
+        url = f"https://catalog.ucdavis.edu/courses-subject-code/{subject_code}/"
+        print(f"\n📘 Scraping {subject_code.upper()} catalog...")
+        print(f"URL: {url}")
+
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            print(f"Failed (HTTP {response.status_code}) - skipping {subject_code.upper()}")
+            continue
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        courses = soup.find_all("div", class_="courseblock")
+
+        data = []
+        for course in courses:
+            code = course.find("span", class_="detail-code")
+            title = course.find("span", class_="detail-title")
+            units = course.find("span", class_="detail-hours_html")
+            desc = course.find("div", class_="courseblockextra")
+
+            # Flexible prerequisite detection
+            prereq_tag = course.find(
+                lambda tag: tag.has_attr("class")
+                and any("detail-prerequisite" in c for c in tag["class"])
+            )
+
+            if prereq_tag:
+                prereq_text = " ".join(prereq_tag.stripped_strings)
+                prereq_text = prereq_text.replace("Prerequisite(s):", "").strip()
+            else:
+                prereq_text = ""
+
+            data.append({
+                "Course Code": code.get_text(strip=True) if code else "",
+                "Title": title.get_text(strip=True) if title else "",
+                "Units": units.get_text(strip=True) if units else "",
+                "Description": desc.get_text(strip=True) if desc else "",
+                "Prerequisites": prereq_text
+            })
+
+        df = pd.DataFrame(data)
+
+        # Save CSV
+        output_path = os.path.join(save_dir, f"{subject_code.upper()}_courses.csv")
+        df.to_csv(output_path, index=False)
+
+        print(f"Scraped {len(df)} courses for {subject_code.upper()}")
+        print(f"Saved to: {output_path}")
+
+        results[subject_code.upper()] = df
+
+    return results
