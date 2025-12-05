@@ -1,0 +1,17 @@
+def dfs_traversal(G, start):
+    """
+    Depth-first traversal of a directed graph G starting at `start`.
+    Returns the list of visited nodes in DFS order.
+    """
+    visited = []
+    stack = [start]
+
+    while stack:
+        node = stack.pop()
+        if node not in visited:
+            visited.append(node)
+            # Add neighbors in reverse sorted order so traversal is deterministic
+            neighbors = sorted(G.successors(node), reverse=True)
+            stack.extend(neighbors)
+
+    return visited
