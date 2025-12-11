@@ -1,0 +1,101 @@
+{
+  "degree": "BS Statistics",
+  "track": "Applied Statistics Track",
+  "catalog_year": "2025-2026",
+
+  "major_units_required_min": 75,
+  "major_units_required_max": 83,
+
+  "blocks": {
+
+    "preparatory_subject_matter": {
+      "description": "Math 21 series recommended but student can also complete the MAT 016 series. Includes CS intro, statistics intro, and linear algebra.",
+      "requirements": [
+        {
+          "label": "Short Calculus (or MAT 21 series recommended)",
+          "type": "all",
+          "courses": ["MAT 016A", "MAT 016B", "MAT 016C"]
+        },
+        {
+          "label": "Linear Algebra",
+          "type": "one_of",
+          "courses": ["MAT 022A", "MAT 022AL"]
+        },
+        {
+          "label": "Introductory Statistics",
+          "type": "one_of",
+          "courses": ["STA 013", "STA 032"]
+        },
+        {
+          "label": "Computer Science Intro",
+          "type": "one_of",
+          "courses": ["ECS 032A", "ECS 010", "ECS 036A", "ENG 006", "ENG 017"]
+        },
+        {
+          "label": "Discipline Prerequisite Pair",
+          "type": "advisor_input",
+          "description": "Two introductory courses serving as prerequisites for upper division coursework in the chosen applied discipline."
+        }
+      ]
+    },
+
+    "depth_subject_matter": {
+      "description": "Upper division core statistics courses required for the applied statistics track.",
+      "requirements": [
+        {
+          "label": "Applied Statistical Methods: Analysis of Variance",
+          "type": "all",
+          "courses": ["STA 106"]
+        },
+        {
+          "label": "Applied Statistical Methods: Regression Analysis",
+          "type": "all",
+          "courses": ["STA 108"]
+        },
+        {
+          "label": "Mathematical Statistics: Brief Course (Part A)",
+          "type": "all",
+          "courses": ["STA 130A"]
+        },
+        {
+          "label": "Mathematical Statistics: Brief Course (Part B)",
+          "type": "all",
+          "courses": ["STA 130B"]
+        },
+        {
+          "label": "Analysis of Categorical Data",
+          "type": "all",
+          "courses": ["STA 138"]
+        },
+        {
+          "label": "Fundamentals of Statistical Data Science",
+          "type": "all",
+          "courses": ["STA 141A"]
+        }
+      ]
+    },
+
+    "choose_three_upper_division": {
+      "description": "Students must choose **three** additional upper-division applied statistics or data science courses.",
+      "type": "choose",
+      "choose": 3,
+      "courses": [
+        "STA 104",
+        "STA 141B",
+        "STA 160",
+        "STA 142A"
+      ]
+    },
+
+    "cluster_electives": {
+      "description": "Four cluster elective courses in an applied discipline. Must be chosen with major advisor approval.",
+      "type": "advisor_required",
+      "eligible_examples": [
+        "ANT 001", "ANT 002", "ANT 054", "GEL 012",
+        "ECS 032B", "PHY 009B", "PSC 100", "ECN 101",
+        "WFC 010", "ANT 151", "NUT 010",
+        "PSY 101"
+      ]
+    }
+  }
+}

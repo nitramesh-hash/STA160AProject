@@ -1,0 +1,115 @@
+{
+  "degree": "BS Computer Science",
+  "track": "Option B",
+  "catalog_year": "2025-2026",
+
+  "blocks": {
+
+    "preparatory_subject_matter": {
+      "description": "Lower-division math, programming, and science foundations.",
+      "requirements": [
+        {
+          "label": "Calculus",
+          "type": "all",
+          "courses": ["MAT 021A", "MAT 021B", "MAT 021C"]
+        },
+        {
+          "label": "Linear Algebra",
+          "type": "all",
+          "courses": ["MAT 022A"]
+        },
+        {
+          "label": "Discrete Mathematics",
+          "type": "all",
+          "courses": ["ECS 020"]
+        },
+        {
+          "label": "Programming",
+          "type": "all",
+          "courses": ["ECS 036A"]
+        },
+        {
+          "label": "Software Development",
+          "type": "all",
+          "courses": ["ECS 036B"]
+        },
+        {
+          "label": "Data Structures",
+          "type": "all",
+          "courses": ["ECS 036C"]
+        },
+        {
+          "label": "Computer Organization",
+          "type": "all",
+          "courses": ["ECS 050"]
+        },
+        {
+          "label": "Science Electives",
+          "type": "choose",
+          "choose": 3,
+          "courses": [
+            "BIS 002A", "BIS 002B", "BIS 002C",
+            "CHE 002A", "CHE 002B", "CHE 002C",
+            "CHE 004A", "CHE 004B", "CHE 004C",
+            "PHY 009A", "PHY 009B", "PHY 009C"
+          ]
+        }
+      ]
+    },
+
+    "depth_subject_matter": {
+      "description": "Upper division CS core requirements.",
+      "requirements": [
+        {
+          "label": "Algorithm Design",
+          "type": "all",
+          "courses": ["ECS 122A"]
+        },
+        {
+          "label": "Theory Requirement",
+          "type": "one_of",
+          "courses": ["ECS 120", "ECS 122B"]
+        },
+        {
+          "label": "Programming Languages",
+          "type": "all",
+          "courses": ["ECS 140A"]
+        },
+        {
+          "label": "Operating Systems",
+          "type": "all",
+          "courses": ["ECS 150"]
+        },
+        {
+          "label": "Computer Architecture",
+          "type": "all",
+          "courses": ["ECS 154A"]
+        },
+        {
+          "label": "Probability Requirement",
+          "type": "one_of",
+          "courses": ["ECS 132", "MAT 135A", "STA 131A"]
+        }
+      ]
+    },
+
+    "cs_electives_option_b": {
+      "description": "Choose **6 courses** from the approved upper-division CS elective list.",
+      "type": "choose",
+      "choose": 6,
+      "courses": [
+        "ECS 120", "ECS 122A", "ECS 122B", "ECS 124",
+        "ECS 129", "ECS 130", "ECS 132", "ECS 140A", "ECS 140B",
+        "ECS 150", "ECS 152", "ECS 154A", "ECS 158", "ECS 160",
+        "ECS 162", "ECS 165A", "ECS 165B", "ECS 170", "ECS 171",
+        "ECS 172", "ECS 173", "ECS 175", "ECS 177", "ECS 178",
+        "ECS 188", "ECS 189", "ECS 192", "ECS 199",
+        "ECN 122", "EEC 100", "EEC 171", "EEC 172",
+        "LIN 127", "LIN 177",
+        "MAT 100", "MAT 111", "MAT 135A", "MAT 135B",
+        "STA 131A", "STA 131B", "STA 141B", "STA 141C",
+        "STS 115", "PSC 120"
+      ]
+    }
+  }
+}

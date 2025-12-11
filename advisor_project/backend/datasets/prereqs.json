@@ -1,0 +1,966 @@
+{
+  "ECS011": { "and": [], "or": [] },
+
+  "ECS012": { "and": [], "or": [] },
+
+  "ECS017": {
+    "and": [],
+    "or": [["MAT016A", "MAT017A", "MAT019A", "MAT021A"]]
+  },
+
+  "ECS020": {
+    "and": [],
+    "or": [["MAT016A", "MAT017A", "MAT019A", "MAT021A"]]
+  },
+
+  "ECS032A": { "and": [], "or": [] },
+  "ECS032AV": { "and": [], "or": [] },
+
+  "ECS032B": {
+    "and": [],
+    "or": [["ECS010", "ECS030", "ECS032A", "ECS032AV", "ECS036A"]]
+  },
+
+  "ECS032C": {
+    "and": ["ECS032B"],
+    "or": []
+  },
+
+  "ECS034": {
+    "and": ["ECS032C"],
+    "or": []
+  },
+
+  "ECS036A": {
+    "and": [],
+    "or": [["ECS032A", "ECS032AV", "ECS010"]]
+  },
+
+  "ECS036B": {
+    "and": [],
+    "or": [["ECS030", "ECS036A"]]
+  },
+
+  "ECS036C": {
+    "and": ["ECS020"],
+    "or": [["ECS040", "ECS036B"]]
+  },
+
+  "ECS040": {
+    "and": [],
+    "or": [["ECS032B", "ECS036B", "ECS032C"]]
+  },
+
+  "ECS050": {
+    "and": [],
+    "or": [["ECS040", "ECS036B", "ECS032C"]]
+  },
+
+  "ECS060": {
+    "and": ["ECS036C"],
+    "or": []
+  },
+
+  "ECS111": {
+    "and": [],
+    "or": [
+      ["ECS032B", "ECS036C"],
+      ["MAT135A", "STA035C"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS113": {
+    "and": [],
+    "or": [["ECS032A", "ECS032AV", "ECS036A", "ECS010", "ECS030"]]
+  },
+
+  "ECS115": {
+    "and": [],
+    "or": [["ECS032B", "ECS036C"]]
+  },
+
+  "ECS116": {
+    "and": [],
+    "or": [["ECS032B", "ECS036C"]]
+  },
+
+  "ECS117": {
+    "and": [],
+    "or": [
+      ["ECS017", "ECS020"],
+      ["ECS032B", "ECS036C"]
+    ]
+  },
+
+  "ECS119": {
+    "and": [],
+    "or": [["ECS116", "ECS165A"]]
+  },
+
+  "ECS120": {
+    "and": [],
+    "or": [
+      ["MAT108"],
+      ["ECS020"],
+      ["ECS032B", "ECS036C"]
+    ]
+  },
+
+  "ECS122A": {
+    "and": [],
+    "or": [
+      ["ECS020"],
+      ["ECS060", "ECS032B", "ECS036C"]
+    ]
+  },
+
+  "ECS122B": {
+    "and": ["ECS122A"],
+    "or": [
+      ["ECS060", "ECS034", "ECS036C"]
+    ]
+  },
+
+  "ECS124": {
+    "and": [],
+    "or": [
+      ["ECS032A", "ECS032AV", "ECS036A", "ENG006"],
+      ["STA032", "STA035B", "STA100", "STA131A", "ECS132", "MAT135A", "EEC161", "BIM105"],
+      ["BIS002A", "MCB010"]
+    ]
+  },
+
+  "ECS127": {
+    "and": [],
+    "or": [
+      ["ECS020", "MAT108"],
+      ["ECS010", "ECS032A", "ECS032AV", "ECS030", "ECS036A"]
+    ]
+  },
+
+  "ECS129": {
+    "and": [],
+    "or": [
+      ["BIS002A", "MCB010"],
+      ["ECS010", "ECS032A", "ECS032AV", "ECS036A"]
+    ]
+  },
+
+  "ECS130": {
+    "and": [],
+    "or": [
+      ["ECS030", "ENG006", "ECS032A", "ECS032AV", "ECS010", "ECS036A"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS132": {
+    "and": [],
+    "or": [
+      ["ECS040", "ECS034", "ECS036B"],
+      ["ECS020"],
+      ["MAT021C"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS140A": {
+    "and": [],
+    "or": [
+      ["ECS050"],
+      ["ECS020"],
+      ["ECS034", "ECS036C"]
+    ]
+  },
+
+  "ECS140B": {
+    "and": ["ECS140A"],
+    "or": []
+  },
+
+  "ECS142": {
+    "and": ["ECS140A", "ECS120"],
+    "or": []
+  },
+
+  "ECS145": {
+    "and": [],
+    "or": [["ECS034", "ECS036C", "ECS060"]]
+  },
+
+  "ECS150": {
+    "and": [],
+    "or": [
+      ["ECS034", "ECS036C", "ECS060"],
+      ["ECS154A", "EEC170"]
+    ]
+  },
+
+  "ECS152A": {
+    "and": [],
+    "or": [
+      ["ECS032B", "ECS036C"],
+      ["ECS132", "EEC161", "MAT135A", "STA032", "STA035B", "STA100", "STA131A"]
+    ]
+  },
+
+  "ECS152B": {
+    "and": ["ECS150"],
+    "or": [["ECS152A", "EEC173A"]]
+  },
+
+  "ECS152C": {
+    "and": [],
+    "or": [["EEC173A", "ECS152A"]]
+  },
+
+  "ECS153": {
+    "and": [],
+    "or": [["ECS150"], ["ECS152A", "EEC173A"]]
+  },
+
+  "ECS153A": {
+    "and": ["ECS150"],
+    "or": [["ECS152A", "EEC173A"]]
+  },
+
+  "ECS153B": {
+    "and": ["ECS153A"],
+    "or": []
+  },
+
+  "ECS153C": {
+    "and": ["ECS153B"],
+    "or": []
+  },
+
+  "ECS154A": {
+    "and": [],
+    "or": [["ECS050", "EEC070"]]
+  },
+
+  "ECS154B": {
+    "and": [],
+    "or": [["ECS154A", "EEC170", "EEC180A"]]
+  },
+
+  "ECS158": {
+    "and": ["ECS150"],
+    "or": [["ECS154B"]]
+  },
+
+  "ECS160": {
+    "and": ["ECS140A"],
+    "or": []
+  },
+
+  "ECS161": {
+    "and": [],
+    "or": [["ECS040", "ECS032B", "ECS036B"]]
+  },
+
+  "ECS162": {
+    "and": [],
+    "or": [["ECS030", "ECS034", "ECS036B"]]
+  },
+
+  "ECS163": {
+    "and": [],
+    "or": [["ECS032B", "ECS036C"]]
+  },
+
+  "ECS164": { "and": [], "or": [] },
+
+  "ECS165A": {
+    "and": [],
+    "or": [["ECS060", "ECS032B", "ECS036C"]]
+  },
+
+  "ECS165B": {
+    "and": ["ECS165A"],
+    "or": [["ECS060", "ECS034", "ECS036C"]]
+  },
+
+  "ECS166": {
+    "and": [],
+    "or": [["ECS032B", "ECS036C"]]
+  },
+
+  "ECS170": {
+    "and": [],
+    "or": [["ECS060", "ECS032B", "ECS036C"]]
+  },
+
+  "ECS171": {
+    "and": [],
+    "or": [
+      ["ECS032B", "ECS036C"],
+      ["STA032", "STA035B", "STA100", "STA131A", "MAT135A", "EEC161", "ECS132"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS172": {
+    "and": [],
+    "or": [
+      ["ECS032B", "ECS036B", "ECS040"],
+      ["ECS132", "STA130A", "STA131A", "ECN140"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS173": {
+    "and": [],
+    "or": [
+      ["MAT067", "MAT027A", "MAT022A"],
+      ["ECS060", "ECS032B", "ECS036C"]
+    ]
+  },
+
+  "ECS174": {
+    "and": [],
+    "or": [
+      ["ECS060", "ECS032B", "ECS036C"],
+      ["STA032", "STA131A", "MAT135A", "EEC161", "ECS132"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS175": {
+    "and": [],
+    "or": [
+      ["ECS060", "ECS034", "ECS036C"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "ECS177": {
+    "and": ["ECS175"],
+    "or": []
+  },
+
+  "ECS178": {
+    "and": ["ECS175"],
+    "or": []
+  },
+
+  "ECS179": {
+    "and": [],
+    "or": [["ECS032B", "ECS036C"]]
+  },
+
+  "STA010": { "and": [], "or": [] },
+
+  "STA012": { "and": [], "or": [] },
+
+  "STA013": { "and": [], "or": [] },
+
+  "STA013Y": { "and": [], "or": [] },
+
+  "STA015A": { "and": [], "or": [] },
+
+  "STA015B": {
+    "and": [],
+    "or": [["STA015A", "STA013", "STA032", "STA100"]]
+  },
+
+  "STA015C": {
+    "and": ["STA015B"],
+    "or": []
+  },
+
+  "STA032": {
+    "and": [],
+    "or": [["MAT016B", "MAT017B", "MAT019B", "MAT021B"]]
+  },
+
+  "STA035A": {
+    "and": [],
+    "or": [["MAT016A", "MAT017A", "MAT019A", "MAT021A"]]
+  },
+
+  "STA035B": {
+    "and": [],
+    "or": [
+      ["STA013", "STA013Y"],
+      ["ECS032A", "ECS032AV"],
+      ["STA032"],
+      ["STA035A"],
+      ["STA100"],
+      ["MAT016B", "MAT017B", "MAT019B", "MAT021B"]
+    ]
+  },
+
+  "STA035C": {
+    "and": ["STA035B"],
+    "or": [["MAT016B", "MAT017B", "MAT019B", "MAT021B"]]
+  },
+
+  "STA090X": { "and": [], "or": [] },
+
+  "STA092": { "and": [], "or": [] },
+
+  "STA098": { "and": [], "or": [] },
+
+  "STA099": { "and": [], "or": [] },
+
+  "STA100": {
+    "and": [],
+    "or": [["MAT016B", "MAT017B", "MAT019B", "MAT021B"]]
+  },
+
+  "STA101": {
+    "and": [],
+    "or": [["STA035B", "STA100"]]
+  },
+
+  "STA103": {
+    "and": [],
+    "or": [
+      ["STA013", "STA013Y", "STA032", "STA035B", "STA100"],
+      ["MAT016B", "MAT017B", "MAT019B", "MAT021B"]
+    ]
+  },
+
+  "STA104": {
+    "and": [],
+    "or": [["STA013", "STA013Y", "STA032", "STA035B", "STA100"]]
+  },
+
+  "STA106": {
+    "and": [],
+    "or": [["STA013", "STA013Y", "STA032", "STA035B", "STA100"]]
+  },
+
+  "STA108": {
+    "and": [],
+    "or": [["STA013", "STA013Y", "STA032", "STA035B", "STA100"]]
+  },
+
+  "STA109": {
+    "and": [],
+    "or": [["STA015C", "STA106", "STA108"]]
+  },
+
+  "STA130A": {
+    "and": [],
+    "or": [
+      ["MAT016C", "MAT017C", "MAT019C", "MAT021C"],
+      ["STA013", "STA013Y", "STA032", "STA035B", "STA100"]
+    ]
+  },
+
+  "STA130B": {
+    "and": [],
+    "or": [["STA130A", "STA131A", "MAT135A"]]
+  },
+
+  "STA131A": {
+    "and": ["MAT021C"],
+    "or": [["MAT022A", "MAT027A", "MAT067"]]
+  },
+
+  "STA131B": {
+    "and": [],
+    "or": [["STA131A", "MAT135A"]]
+  },
+
+  "STA131C": {
+    "and": ["STA131B"],
+    "or": []
+  },
+
+  "STA135": {
+    "and": [],
+    "or": [
+      ["STA130B", "STA131B"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "STA137": {
+    "and": ["STA108"],
+    "or": [["MAT022A", "MAT027A", "MAT067"]]
+  },
+
+  "STA138": {
+    "and": [],
+    "or": [
+      ["STA130B", "STA131B"],
+      ["STA106", "STA108"]
+    ]
+  },
+
+  "STA141A": {
+    "and": [],
+    "or": [["STA108", "STA106"]]
+  },
+
+  "STA141B": {
+    "and": ["STA141A"],
+    "or": []
+  },
+
+  "STA141C": {
+    "and": [],
+    "or": [
+      ["STA141B"],
+      ["STA141A", "ECS010", "ECS032A", "ECS032AV"]
+    ]
+  },
+
+  "STA142A": {
+    "and": ["STA141A"],
+    "or": [
+      ["STA130A", "STA131A", "MAT135A"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "STA142B": {
+    "and": ["STA141A"],
+    "or": [
+      ["STA130A", "STA131A", "MAT135A"],
+      ["MAT022A", "MAT027A", "MAT067"]
+    ]
+  },
+
+  "STA144": {
+    "and": [],
+    "or": [
+      ["STA130B", "STA131B"],
+      ["STA106", "STA108"]
+    ]
+  },
+
+  "STA145": {
+    "and": [],
+    "or": [["STA130A", "STA131A", "MAT135A"]]
+  },
+
+  "STA160": {
+    "and": ["STA141A"],
+    "or": []
+  },
+
+  "STA190X": {
+    "and": [],
+    "or": [["STA013", "STA013Y", "STA032", "STA100", "STA103"]]
+  },
+
+  "STA192": { "and": [], "or": [] },
+  "STA194HA": { "and": [], "or": [] },
+  "STA194HB": { "and": [], "or": [] },
+  "STA198": { "and": [], "or": [] },
+  "STA199": { "and": [], "or": [] },
+
+
+
+  "MAT012": { "and": [], "or": [] },
+
+  "MAT017A": { "and": [], "or": [] },
+
+  "MAT017B": {
+    "and": [],
+    "or": [["MAT016A", "MAT017A", "MAT019A", "MAT021A", "MAT021AH"]]
+  },
+
+  "MAT017C": {
+    "and": ["MAT017B"],
+    "or": []
+  },
+
+  "MAT019A": { "and": [], "or": [] },
+
+  "MAT019B": {
+    "and": [],
+    "or": [["MAT017A", "MAT021A", "MAT021AH", "MAT019A"]]
+  },
+
+  "MAT019C": {
+    "and": [],
+    "or": [["MAT019B", "MAT017B", "MAT021B", "MAT021BH"]]
+  },
+
+  "MAT021A": { "and": [], "or": [] },
+
+  "MAT021AH": { "and": [], "or": [] },
+
+  "MAT021AL": {
+    "and": ["MAT021A"],
+    "or": []
+  },
+
+  "MAT021B": {
+    "and": [],
+    "or": [["MAT021A", "MAT021AH", "MAT017A"]]
+  },
+
+  "MAT021BH": {
+    "and": [],
+    "or": [["MAT021A", "MAT021AH"]]
+  },
+
+  "MAT021BL": {
+    "and": ["MAT021B"],
+    "or": []
+  },
+
+  "MAT021C": {
+    "and": [],
+    "or": [["MAT016C", "MAT017C", "MAT021B", "MAT021BH", "MAT017B"]]
+  },
+
+  "MAT021CH": {
+    "and": [],
+    "or": [["MAT021B", "MAT021BH"]]
+  },
+
+  "MAT021CL": {
+    "and": ["MAT021C"],
+    "or": []
+  },
+
+  "MAT021D": {
+    "and": [],
+    "or": [["MAT021C", "MAT021CH", "MAT017C"]]
+  },
+
+  "MAT021M": { "and": [], "or": [] },
+
+  "MAT022A": {
+    "and": [],
+    "or": [["MAT016C", "MAT017C", "MAT021C", "MAT021CH"]]
+  },
+
+  "MAT022AL": {
+    "and": [],
+    "or": [["MAT016C", "MAT017C", "MAT021C", "MAT021CH"]]
+  },
+
+  "MAT022B": {
+    "and": [],
+    "or": [["MAT022A", "MAT027A", "BIS027A", "MAT067"]]
+  },
+
+  "MAT027A": {
+    "and": [],
+    "or": [["MAT017C", "MAT021C", "MAT021CH"]]
+  },
+
+  "MAT027B": {
+    "and": [],
+    "or": [
+      ["MAT027A", "BIS027A"],
+      ["MAT022A"],
+      ["MAT022AL", "ENG006", "ECS032A", "ECS032AV", "ECS036A", "ECH060", "EME005"]
+    ]
+  },
+
+  "MAT036": { "and": [], "or": [] },
+
+  "MAT067": {
+    "and": [],
+    "or": [["MAT021C", "MAT021CH"]]
+  },
+
+  "MAT071A": { "and": [], "or": [] },
+  "MAT071B": { "and": [], "or": [] },
+  "MAT089": { "and": [], "or": [] },
+  "MAT098": { "and": [], "or": [] },
+  "MAT099": { "and": [], "or": [] },
+
+  "MAT107": {
+    "and": [],
+    "or": [
+      ["MAT027A", "BIS027A"],
+      ["MAT022A"],
+      ["MAT022AL", "ENG006", "ECS032A", "ECS032AV", "ECS036A", "ECH060", "EME005"]
+    ]
+  },
+
+  "MAT108": {
+    "and": ["MAT021B"],
+    "or": []
+  },
+
+  "MAT108V": {
+    "and": ["MAT021B"],
+    "or": []
+  },
+
+  "MAT111": {
+    "and": [],
+    "or": [["MAT127A", "MAT067", "MAT108", "MAT114", "MAT115A", "MAT141", "MAT145"]]
+  },
+
+  "MAT114": {
+    "and": ["MAT021C"],
+    "or": [["MAT022A", "BIS027A", "MAT067"]]
+  },
+
+  "MAT115A": {
+    "and": ["MAT021B"],
+    "or": []
+  },
+
+  "MAT115B": {
+    "and": ["MAT115A"],
+    "or": [["MAT022A", "MAT027A", "MAT067", "BIS027A"]]
+  },
+
+  "MAT116": {
+    "and": ["MAT021D"],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT118A": {
+    "and": ["MAT021D"],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT118B": {
+    "and": ["MAT118A"],
+    "or": []
+  },
+
+  "MAT118C": {
+    "and": ["MAT118B"],
+    "or": []
+  },
+
+  "MAT119A": {
+    "and": ["MAT021D"],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT119B": {
+    "and": ["MAT119A"],
+    "or": []
+  },
+
+  "MAT124": {
+    "and": [],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT127A": {
+    "and": ["MAT021C"],
+    "or": [
+      ["MAT067", "MAT022A", "MAT027A", "BIS027A"],
+      ["MAT108", "MAT108V"]
+    ]
+  },
+
+  "MAT127B": {
+    "and": ["MAT127A"],
+    "or": []
+  },
+
+  "MAT127C": {
+    "and": ["MAT127B"],
+    "or": []
+  },
+
+  "MAT128A": {
+    "and": ["MAT021C"],
+    "or": [["ECS032A", "ENG006", "EME005", "ECS030"]]
+  },
+
+  "MAT128B": {
+    "and": [],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["ECS032A", "ECS032AV", "ENG006", "EME005", "ECS030"]
+    ]
+  },
+
+  "MAT128C": {
+    "and": [],
+    "or": [
+      ["ECS032A", "ECS032AV", "ENG006", "EME005", "ECS030"],
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT129": {
+    "and": ["MAT021D", "MAT127A"],
+    "or": [
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"],
+      ["MAT022B", "MAT027B", "BIS027B"]
+    ]
+  },
+
+  "MAT133": {
+    "and": ["MAT108"],
+    "or": [
+      ["MAT067", "MAT022A", "MAT027A", "BIS027A"],
+      ["MAT135A"]
+    ]
+  },
+
+  "MAT135A": {
+    "and": ["MAT021C"],
+    "or": [["MAT108", "MAT067"]]
+  },
+
+  "MAT135B": {
+    "and": ["MAT135A"],
+    "or": [["MAT022A", "MAT027A", "MAT067", "BIS027A"]]
+  },
+
+  "MAT141": {
+    "and": ["MAT021B"],
+    "or": [["MAT022A", "MAT027A", "MAT067", "BIS027A"]]
+  },
+
+  "MAT145": {
+    "and": ["MAT021C"],
+    "or": []
+  },
+
+  "MAT146": {
+    "and": ["MAT145"],
+    "or": [
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"],
+      ["MAT067"]
+    ]
+  },
+
+  "MAT147": {
+    "and": ["MAT127A"],
+    "or": []
+  },
+
+  "MAT148": {
+    "and": [],
+    "or": [
+      ["MAT067"],
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"]
+    ]
+  },
+
+  "MAT150A": {
+    "and": [],
+    "or": [
+      ["MAT067"],
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"]
+    ]
+  },
+
+  "MAT150B": {
+    "and": ["MAT150A"],
+    "or": []
+  },
+
+  "MAT150C": {
+    "and": ["MAT150B"],
+    "or": []
+  },
+
+  "MAT165": {
+    "and": [],
+    "or": [
+      ["MAT127A", "MAT108", "MAT114", "MAT115A", "MAT145"],
+      ["MAT022A", "MAT027A", "MAT067", "BIS027A"]
+    ]
+  },
+
+  "MAT167": {
+    "and": [],
+    "or": [["MAT022A", "MAT027A", "BIS027A", "MAT067"]]
+  },
+
+  "MAT168": {
+    "and": ["MAT021C"],
+    "or": [
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"],
+      ["MAT067"]
+    ]
+  },
+
+  "MAT170": {
+    "and": [],
+    "or": [["MAT167", "MAT128B", "ECS130"]]
+  },
+
+  "MAT180": {
+    "and": ["MAT127A"],
+    "or": [
+      ["MAT067"],
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"]
+    ]
+  },
+
+  "MAT185A": {
+    "and": ["MAT127B"],
+    "or": [
+      ["MAT067"],
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"]
+    ]
+  },
+
+  "MAT185B": {
+    "and": ["MAT185A"],
+    "or": []
+  },
+
+  "MAT189": {
+    "and": ["MAT127A"],
+    "or": [
+      ["MAT022A", "MAT027A", "BIS027A", "MAT108"],
+      ["MAT067"]
+    ]
+  },
+
+  "MAT192": { "and": [], "or": [] },
+  "MAT194": { "and": [], "or": [] },
+  "MAT197TC": { "and": [], "or": [] },
+  "MAT198": { "and": [], "or": [] },
+  "MAT199": { "and": [], "or": [] }
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
